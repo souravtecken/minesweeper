@@ -1,117 +1,134 @@
 from graphics import *
 from random import choice
 
-gridSize=8
-tileWidth=100
-numberOfMines=10
 unclickedColor="grey"
 clickedColor="white"
-window= GraphWin("Minesweeper",tileWidth*gridSize,tileWidth*gridSize)
+windowHeight=900
 
-
-class Tile:
-    clickedTiles=0
-    def __init__(self, x, y, value=0):
+class Tile:    
+    def __init__(self, x, y, value=0, width=100):
         self.x=x
         self.y=y
-        self.topLeft=Point(self.x-tileWidth//2, self.y-tileWidth//2)
-        self.bottomRight=Point(self.x+tileWidth//2, self.y+tileWidth//2)
+        self.width=width
+        self.topLeft=Point(x-width//2, y-width//2)
+        self.bottomRight=Point(x+width//2, y+width//2)
         self.val=value    
-        self.clicked=False            
+        self.mine=False
+        self.clicked=False
+        self.flagged=False            
 
-    def drawTile(self):
+    def drawTile(self, window):
         r=Rectangle(self.topLeft,self.bottomRight)         
         r.setFill(unclickedColor)        
         if self.clicked:
-            r.setFill(clickedColor)            
-        if self.val:
-            if self.val>8:
-                self.val='M'
-        t=Text(Point(self.x,self.y),self.val)
+            r.setFill(clickedColor)                    
+        t=Text(Point(self.x,self.y),self.val)        
+        if self.flagged:            
+            t=Text(Point(self.x,self.y),'F')
         r.draw(window)
-        if self.clicked and self.val or self.val=="M":        
+        if self.clicked and self.val or self.flagged:        
             t.draw(window)        
                             
-tiles=[[Tile(tileWidth*j+tileWidth//2,tileWidth*i+tileWidth//2, 0) for j in range(gridSize)] for i in range(gridSize)]   
 
-def findNeighbours(tiles, i, j, callback):
-    neighbours=list()
-    if i>0:
-        neighbours.append((i-1,j))        
-        if j>0:
-            neighbours.append((i-1,j-1))                   
-        if j<gridSize-1:
-            neighbours.append((i-1,j+1))            
-    if i<gridSize-1:
-        neighbours.append((i+1,j))        
-        if j>0:
-            neighbours.append((i+1,j-1))            
-        if j<gridSize-1:
-            neighbours.append((i+1,j+1))            
-    if j>0:
-        neighbours.append((i,j-1))        
-    if j<gridSize-1:
-        neighbours.append((i,j+1))
 
-    if callback==increment:    
-        callback(tiles, neighbours)        
-    else:
-        callback(tiles,i,j,neighbours)
-        
-def increment(tiles,neighbours):
-    for pair in neighbours:
-        tiles[pair[0]][pair[1]].val+=1
+class Minesweeper:
+    def __init__(self, gridSize):        
+        self.flags=0
+        self.clickedTiles=0
+        self.gridSize=gridSize
+        self.tileWidth=windowHeight//gridSize
+        self.numberOfMines=10
+        self.tiles=[[Tile(self.tileWidth*j + self.tileWidth//2, self.tileWidth*i + self.tileWidth//2, 0, self.tileWidth)
+                                                     for j in range(gridSize)] for i in range(gridSize)]   
+        self.window= GraphWin("Minesweeper",self.tileWidth*self.gridSize,self.tileWidth*gridSize)        
 
-def initTileValues(tiles):
-    tileNumbers=list(range(gridSize*gridSize))
-    for __ in range(numberOfMines):
-        tileNumber=choice(tileNumbers)
-        tileNumbers.remove(tileNumber)
-        i=tileNumber//gridSize
-        j=tileNumber%gridSize
-        tiles[i][j].val=9
-        findNeighbours(tiles, i, j, increment)
+    def drawGrid(self):
+        for tileRow in self.tiles:
+            for tile in tileRow:
+                tile.drawTile(self.window)
 
-def drawGrid(tiles):
-    for tileRow in tiles:
-        for tile in tileRow:
-            tile.drawTile()
-
-def findClickedIndex(clickedPoint):
-    i=int(clickedPoint.y//tileWidth)
-    j=int(clickedPoint.x//tileWidth)
-    if i<gridSize and j<gridSize:
-        return i,j
-    return False,False
-
-def propogate(tiles, i, j, neighbours):
-    tiles[i][j].clicked=True
-    Tile.clickedTiles+=1
-    print(tiles[i][j].clickedTiles)
-    tiles[i][j].drawTile()
-    if tiles[i][j].val==0:
+    def increment(self, neighbours):
         for pair in neighbours:
-            if tiles[pair[0]][pair[1]].clicked==False:
-                findNeighbours(tiles,pair[0],pair[1],propogate)
-    
+            self.tiles[pair[0]][pair[1]].val+=1
 
+    def findNeighbours(self, i, j, callback):
+        neighbours=list()
+        if i>0:
+            neighbours.append((i-1,j))        
+            if j>0:
+                neighbours.append((i-1,j-1))                   
+            if j<self.gridSize-1:
+                neighbours.append((i-1,j+1))            
+        if i<self.gridSize-1:
+            neighbours.append((i+1,j))        
+            if j>0:
+                neighbours.append((i+1,j-1))            
+            if j<self.gridSize-1:
+                neighbours.append((i+1,j+1))            
+        if j>0:
+            neighbours.append((i,j-1))        
+        if j<self.gridSize-1:
+            neighbours.append((i,j+1))
 
-def play():
-    initTileValues(tiles)
-    drawGrid(tiles)
-    while not Tile.clickedTiles == gridSize*gridSize-numberOfMines:
-        clickedPoint,leftOrRight=window.getMouse()
-        i,j=findClickedIndex(clickedPoint)
-        if leftOrRight=='L':
-            if tiles[i][j].val=='M':
-                print("Mine, oops :P")
-                break
-            else:
-                findNeighbours(tiles,i,j,propogate)
+        if callback==self.increment:    
+            callback(neighbours)        
         else:
-            pass
-        
-play()
+            callback(i,j,neighbours)
+
+    def initTileValues(self):
+        tileNumbers=list(range(self.gridSize*self.gridSize))
+        for __ in range(self.numberOfMines):
+            tileNumber=choice(tileNumbers)
+            tileNumbers.remove(tileNumber)
+            i=tileNumber//self.gridSize
+            j=tileNumber%self.gridSize
+            self.tiles[i][j].mine=True
+            self.findNeighbours(i, j, self.increment)
+
+    def propagate(self, i, j, neighbours):
+        self.tiles[i][j].clicked=True
+        self.clickedTiles+=1
+        if self.tiles[i][j].flagged==True:
+            self.tiles[i][j].flagged=False
+            self.flags-=1
+        self.tiles[i][j].drawTile(self.window)
+        if self.tiles[i][j].val==0 and self.tiles[i][j].mine==False:
+            for pair in neighbours:
+                if self.tiles[pair[0]][pair[1]].clicked==False:
+                    self.findNeighbours(pair[0],pair[1],self.propagate)
+
+    def findClickedIndex(self, clickedPoint):
+        i=int(clickedPoint.y//self.tileWidth)
+        j=int(clickedPoint.x//self.tileWidth)
+        if i<self.gridSize and j<self.gridSize:
+            return i,j
+        return False,False        
+
+    def play(self):
+        self.initTileValues()
+        self.drawGrid()
+        while not self.clickedTiles == self.gridSize*self.gridSize-self.numberOfMines:
+            clickedPoint,leftOrRight=self.window.getMouse()
+            i,j=self.findClickedIndex(clickedPoint)
+            if leftOrRight=='L':
+                if self.tiles[i][j].mine==True and self.tiles[i][j].flagged==False:
+                    print("Mine, oops :P")
+                    break            
+                elif self.tiles[i][j].clicked==False and self.tiles[i][j].flagged==False:
+                    self.findNeighbours(i,j,self.propagate)
+            else:
+                if self.tiles[i][j].clicked==False and self.flags<self.numberOfMines or self.tiles[i][j].flagged==True:
+                    self.tiles[i][j].flagged = not self.tiles[i][j].flagged                                        
+                    if self.tiles[i][j].flagged==False:
+                        self.flags-=1
+                    else:
+                        self.flags+=1
+                    self.tiles[i][j].drawTile(self.window)
 
 
-window.close()
+def main():
+    minesweeper=Minesweeper(8)
+    minesweeper.play()
+    minesweeper.window.close()
+
+main()
