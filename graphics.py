@@ -221,7 +221,9 @@ class GraphWin(tk.Canvas):
         self.items = []
         self.mouseX = None
         self.mouseY = None
-        self.bind("<Button-1>", self._onClick)
+        self.leftOrRight = None        
+        self.bind("<Button-1>", self._onLeftClick)
+        self.bind("<Button-3>", self._onRightClick)
         self.bind_all("<Key>", self._onKey)
         self.height = int(height)
         self.width = int(width)
@@ -318,7 +320,7 @@ class GraphWin(tk.Canvas):
         x,y = self.toWorld(self.mouseX, self.mouseY)
         self.mouseX = None
         self.mouseY = None
-        return Point(x,y)
+        return Point(x,y),self.leftOrRight
 
     def checkMouse(self):
         """Return last mouse click or None if mouse has
@@ -330,7 +332,7 @@ class GraphWin(tk.Canvas):
             x,y = self.toWorld(self.mouseX, self.mouseY)
             self.mouseX = None
             self.mouseY = None
-            return Point(x,y)
+            return Point(x,y),self.leftOrRight
         else:
             return None
 
@@ -380,9 +382,17 @@ class GraphWin(tk.Canvas):
     def setMouseHandler(self, func):
         self._mouseCallback = func
         
-    def _onClick(self, e):
+    def _onLeftClick(self, e):
         self.mouseX = e.x
         self.mouseY = e.y
+        self.leftOrRight='L'
+        if self._mouseCallback:
+            self._mouseCallback(Point(e.x, e.y))
+
+    def _onRightClick(self, e):
+        self.mouseX = e.x
+        self.mouseY = e.y
+        self.leftOrRight='R'
         if self._mouseCallback:
             self._mouseCallback(Point(e.x, e.y))
 

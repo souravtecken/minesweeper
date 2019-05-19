@@ -100,15 +100,17 @@ def play():
     initTileValues(tiles)
     drawGrid(tiles)
     while not Tile.clickedTiles == gridSize*gridSize-numberOfMines:
-        clickedPoint=window.getMouse()
+        clickedPoint,leftOrRight=window.getMouse()
         i,j=findClickedIndex(clickedPoint)
-        if tiles[i][j].val=='M':
-            print("Mine, oops :P")
-            break
+        if leftOrRight=='L':
+            if tiles[i][j].val=='M':
+                print("Mine, oops :P")
+                break
+            else:
+                findNeighbours(tiles,i,j,propogate)
         else:
-            findNeighbours(tiles,i,j,propogate)
-
-
+            pass
+        
 play()
 
 
