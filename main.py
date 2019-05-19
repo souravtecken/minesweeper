@@ -10,6 +10,7 @@ window= GraphWin("Minesweeper",tileWidth*gridSize,tileWidth*gridSize)
 
 
 class Tile:
+    clickedTiles=0
     def __init__(self, x, y, value=0):
         self.x=x
         self.y=y
@@ -28,7 +29,7 @@ class Tile:
                 self.val='M'
         t=Text(Point(self.x,self.y),self.val)
         r.draw(window)
-        if self.clicked and self.val:        
+        if self.clicked and self.val or self.val=="M":        
             t.draw(window)        
                             
 tiles=[[Tile(tileWidth*j+tileWidth//2,tileWidth*i+tileWidth//2, 0) for j in range(gridSize)] for i in range(gridSize)]   
@@ -85,6 +86,8 @@ def findClickedIndex(clickedPoint):
 
 def propogate(tiles, i, j, neighbours):
     tiles[i][j].clicked=True
+    Tile.clickedTiles+=1
+    print(tiles[i][j].clickedTiles)
     tiles[i][j].drawTile()
     if tiles[i][j].val==0:
         for pair in neighbours:
@@ -96,11 +99,11 @@ def propogate(tiles, i, j, neighbours):
 def play():
     initTileValues(tiles)
     drawGrid(tiles)
-    while True:
+    while not Tile.clickedTiles == gridSize*gridSize-numberOfMines:
         clickedPoint=window.getMouse()
         i,j=findClickedIndex(clickedPoint)
         if tiles[i][j].val=='M':
-            print("Game Over.")
+            print("Mine, oops :P")
             break
         else:
             findNeighbours(tiles,i,j,propogate)
