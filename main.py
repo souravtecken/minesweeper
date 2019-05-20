@@ -1,5 +1,6 @@
 from graphics import *
 from random import choice
+import image 
 
 unclickedColor="grey"
 clickedColor="white"
@@ -15,7 +16,8 @@ class Tile:
         self.val=value    
         self.mine=False
         self.clicked=False
-        self.flagged=False            
+        self.flagged=False 
+        self.icons=image.Image(width)           
 
     def drawTile(self, window):
         r=Rectangle(self.topLeft,self.bottomRight)         
@@ -24,13 +26,14 @@ class Tile:
             r.setFill(clickedColor)                    
         t=Text(Point(self.x,self.y),self.val)        
         if self.flagged:            
-            t=Text(Point(self.x,self.y),'F')
+            t=Text(Point(self.x,self.y),'F')            
         r.draw(window)
-        if self.clicked and self.val or self.flagged:        
+        if self.flagged and self.icons.flagImage:
+            i=Image(Point(self.x,self.y),self.icons.flagImage)
+            i.draw(window)
+        elif self.clicked and self.val or self.flagged:        
             t.draw(window)        
                             
-
-
 class Minesweeper:
     def __init__(self, gridSize):        
         self.flags=0

@@ -161,7 +161,7 @@ __version__ = "5.0"
 #     Added Entry boxes.
 
 import time, os, sys
-
+from PIL import ImageTk,Image
 try:  # import as appropriate for 2.x vs. 3.x
    import tkinter as tk
 except:
@@ -892,7 +892,7 @@ class Image(GraphicsObject):
         self.imageId = Image.idCount
         Image.idCount = Image.idCount + 1
         if len(pixmap) == 1: # file name provided
-            self.img = tk.PhotoImage(file=pixmap[0], master=_root)
+            self.img = ImageTk.PhotoImage(pixmap[0])
         else: # width and height provided
             width, height = pixmap
             self.img = tk.PhotoImage(master=_root, width=width, height=height)
