@@ -2,10 +2,12 @@ from graphics import *
 from random import choice
 import image 
 
-unclickedColor="grey"
-clickedColor="white"
-hoverColor="green"
+unclickedColor=color_rgb(160,160,160)
+clickedColor=color_rgb(220,220,220)
+borderColor=color_rgb(100,100,100)
+hoverColor=color_rgb(190,190,190)
 windowHeight=900
+textColors={0:"none",1:"blue",2:"green",3:"red",4:"purple",5:"maroon",6:"turquoise",7:"black",8:"gray",'F':"black","M":"red"}
 
 class Tile:    
     def __init__(self, x, y, value=0, width=100): 
@@ -20,27 +22,40 @@ class Tile:
         self.flagged=False                    
 
     def drawTile(self, window, image=None, gameOver=False,hover=False): # Draws tile at its coordinates with given width
+        # Rectangle
         r=Rectangle(self.topLeft,self.bottomRight)         
-        r.setFill(unclickedColor)                
+        r.setFill(unclickedColor)    
+        r.setOutline(borderColor)    
+        r.setWidth(3)        
         if self.clicked:
             r.setFill(clickedColor)                    
         elif hover==True:
             r.setFill(hoverColor)
-        t=Text(Point(self.x,self.y),self.val)        
+        r.draw(window)            
+        # Text
+        textString=self.val        
         if self.flagged:            
-            t=Text(Point(self.x,self.y),'F')                    
-        r.draw(window)
+            textString='F'  
+        elif self.mine:
+            textString='M'
+        t=Text(Point(self.x,self.y),textString)
+        t.setSize(int(self.width*0.4))
+        t.setFill(textColors[textString])
+        # Image
         if gameOver==False:
             if self.flagged and image.flagImage:
                 i=Image(Point(self.x,self.y),image.flagImage)
                 i.draw(window)
             elif self.clicked and self.val or self.flagged:        
                 t.draw(window)        
-        else:
-            t=Text(Point(self.x,self.y),'M')                    
-            if image.mineImage:
-                i=Image(Point(self.x,self.y),image.mineImage)
-                i.draw(window)
+        else:            
+            if self.mine and image.mineImage and not self.flagged:
+                i=Image(Point(self.x,self.y),image.mineImage)                
+            elif self.flagged and not self.mine:
+                i=Image(Point(self.x,self.y),image.flagWrongImage)
+            else:
+                i=Image(Point(self.x,self.y),image.flagImage)
+            i.draw(window)
                             
 class Minesweeper:
     def __init__(self, gridSize): # Initialises game properties, gridsize, numberOfMines, so on        
@@ -135,7 +150,7 @@ class Minesweeper:
     def displayMines(self): # Once game's over, displays positions of all mines
         for tileRow in self.tiles:
             for tile in tileRow:
-                if tile.mine==True:
+                if tile.mine==True or tile.flagged==True:
                     tile.drawTile(self.window,self.icons,gameOver=True)
         self.window.getMouseClick()                             
 
