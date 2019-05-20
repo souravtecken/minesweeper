@@ -27,7 +27,7 @@ def main():
     win = GraphWin("My Circle", 100, 100)
     c = Circle(Point(50,50), 10)
     c.draw(win)
-    win.getMouse() # Pause to view result
+    win.getMouseClick() # Pause to view result
     win.close()    # Close window when done
 
 main()
@@ -96,7 +96,7 @@ __version__ = "5.0"
 # Version 3.4 10/16/07
 #     Fixed GraphicsError to avoid "exploded" error messages.
 # Version 3.3 8/8/06
-#     Added checkMouse method to GraphWin
+#     Added checkMouseClick method to GraphWin
 # Version 3.2.3
 #     Fixed error in Polygon init spotted by Andrew Harrington
 #     Fixed improper threading in Image constructor
@@ -219,11 +219,14 @@ class GraphWin(tk.Canvas):
         master.resizable(0,0)
         self.foreground = "black"
         self.items = []
-        self.mouseX = None
-        self.mouseY = None
+        self.mouseX = 0
+        self.mouseY = 0
+        self.mouseClickX = None
+        self.mouseClickY = None
         self.leftOrRight = None        
         self.bind("<Button-1>", self._onLeftClick)
         self.bind("<Button-3>", self._onRightClick)
+        self.bind("<Motion>",self._onMouseMove)
         self.bind_all("<Key>", self._onKey)
         self.height = int(height)
         self.width = int(width)
@@ -306,35 +309,43 @@ class GraphWin(tk.Canvas):
         """Update drawing to the window"""
         self.__checkOpen()
         self.update_idletasks()
-        
+
     def getMouse(self):
+        """ Returns Point object representing current mouse position if there has been no mouse clicks"""        
+        x,y=self.toWorld(self.mouseX,self.mouseY)
+        time.sleep(0.01)
+        if self.mouseClickX != None and self.mouseClickY!= None:
+            return None
+        return Point(x,y)
+        
+    def getMouseClick(self):
         """Wait for mouse click and return Point object representing
         the click"""
         self.update()      # flush any prior clicks
-        self.mouseX = None
-        self.mouseY = None
-        while self.mouseX == None or self.mouseY == None:
+        self.mouseClickX = None
+        self.mouseClickY = None
+        while self.mouseClickX == None or self.mouseClickY == None:
             self.update()
             if self.isClosed(): raise GraphicsError("getMouse in closed window")
             time.sleep(.1) # give up thread
-        x,y = self.toWorld(self.mouseX, self.mouseY)
-        self.mouseX = None
-        self.mouseY = None
+        x,y = self.toWorld(self.mouseClickX, self.mouseClickY)
+        self.mouseClickX = None
+        self.mouseClickY = None
         return Point(x,y),self.leftOrRight
 
-    def checkMouse(self):
+    def checkMouseClick(self):
         """Return last mouse click or None if mouse has
         not been clicked since last call"""
         if self.isClosed():
-            raise GraphicsError("checkMouse in closed window")
+            raise GraphicsError("checkMouseClick in closed window")
         self.update()
-        if self.mouseX != None and self.mouseY != None:
-            x,y = self.toWorld(self.mouseX, self.mouseY)
-            self.mouseX = None
-            self.mouseY = None
+        if self.mouseClickX != None and self.mouseClickY != None:
+            x,y = self.toWorld(self.mouseClickX, self.mouseClickY)
+            self.mouseClickX = None
+            self.mouseClickY = None
             return Point(x,y),self.leftOrRight
         else:
-            return None
+            return None,None
 
     def getKey(self):
         """Wait for user to press a key and return it as a string."""
@@ -381,17 +392,23 @@ class GraphWin(tk.Canvas):
         
     def setMouseHandler(self, func):
         self._mouseCallback = func
-        
-    def _onLeftClick(self, e):
+
+    def _onMouseMove(self, e):        
         self.mouseX = e.x
-        self.mouseY = e.y
+        self.mouseY = e.y    
+        if self._mouseCallback:
+            self._mouseCallback(Point(e.x, e.y))     
+
+    def _onLeftClick(self, e):
+        self.mouseClickX = e.x
+        self.mouseClickY = e.y
         self.leftOrRight='L'
         if self._mouseCallback:
             self._mouseCallback(Point(e.x, e.y))
 
     def _onRightClick(self, e):
-        self.mouseX = e.x
-        self.mouseY = e.y
+        self.mouseClickX = e.x
+        self.mouseClickY = e.y
         self.leftOrRight='R'
         if self._mouseCallback:
             self._mouseCallback(Point(e.x, e.y))
@@ -980,7 +997,7 @@ def test():
     p.draw(win)
     e = Entry(Point(5,6), 10)
     e.draw(win)
-    win.getMouse()
+    win.getMouseClick()
     p.setFill("red")
     p.setOutline("blue")
     p.setWidth(2)
@@ -991,28 +1008,28 @@ def test():
     e.setFill("green")
     e.setText("Spam!")
     e.move(2,0)
-    win.getMouse()
+    win.getMouseClick()
     p.move(2,3)
     s = ""
     for pt in p.getPoints():
         s = s + "(%0.1f,%0.1f) " % (pt.getX(), pt.getY())
     t.setText(s)
-    win.getMouse()
+    win.getMouseClick()
     p.undraw()
     e.undraw()
     t.setStyle("bold")
-    win.getMouse()
+    win.getMouseClick()
     t.setStyle("normal")
-    win.getMouse()
+    win.getMouseClick()
     t.setStyle("italic")
-    win.getMouse()
+    win.getMouseClick()
     t.setStyle("bold italic")
-    win.getMouse()
+    win.getMouseClick()
     t.setSize(14)
-    win.getMouse()
-    t.setFace("arial")
-    t.setSize(20)
-    win.getMouse()
+    win.getMouseClick()
+    t.setFaceClick("arial")
+    t.setSizeClick(20)
+    win.getMouseClick()
     win.close()
 
 #MacOS fix 2
