@@ -8,7 +8,7 @@ hoverColor="green"
 windowHeight=900
 
 class Tile:    
-    def __init__(self, x, y, value=0, width=100):
+    def __init__(self, x, y, value=0, width=100): 
         self.x=x
         self.y=y
         self.width=width
@@ -19,7 +19,7 @@ class Tile:
         self.clicked=False
         self.flagged=False                    
 
-    def drawTile(self, window, image=None, gameOver=False,hover=False):
+    def drawTile(self, window, image=None, gameOver=False,hover=False): # Draws tile at its coordinates with given width
         r=Rectangle(self.topLeft,self.bottomRight)         
         r.setFill(unclickedColor)                
         if self.clicked:
@@ -43,7 +43,7 @@ class Tile:
                 i.draw(window)
                             
 class Minesweeper:
-    def __init__(self, gridSize):        
+    def __init__(self, gridSize): # Initialises game properties, gridsize, numberOfMines, so on        
         self.flags=0
         self.clickedTiles=0
         self.gridSize=gridSize
@@ -55,16 +55,20 @@ class Minesweeper:
                                                      for j in range(gridSize)] for i in range(gridSize)]   
         self.window= GraphWin("Minesweeper",self.tileWidth*self.gridSize,self.tileWidth*gridSize,autoflush=False)        
 
-    def drawGrid(self):
+    def drawGrid(self): # Draws all the tiles 
         for tileRow in self.tiles:
             for tile in tileRow:
                 tile.drawTile(self.window)
 
-    def increment(self, neighbours):
+    def increment(self, neighbours): #Increments all tiles given by these indices by 1 
         for pair in neighbours:
             self.tiles[pair[0]][pair[1]].val+=1
 
     def findNeighbours(self, i, j, callback):
+        """ Finds all neighbours of given tile
+            call back can be either incremet/propagate
+            Increment - To increment values of tiles neighbouring the mines
+            Propagate - To highlight all neighbouring mines recursively """
         neighbours=list()
         if i>0:
             neighbours.append((i-1,j))        
@@ -89,6 +93,8 @@ class Minesweeper:
             callback(i,j,neighbours)
 
     def initTileValues(self):
+        """ Assigns mines to random tiles.
+            Increments value of neighbouring tiles """
         tileNumbers=list(range(self.gridSize*self.gridSize))
         for __ in range(self.numberOfMines):
             tileNumber=choice(tileNumbers)
@@ -110,16 +116,15 @@ class Minesweeper:
                 if self.tiles[pair[0]][pair[1]].clicked==False:
                     self.findNeighbours(pair[0],pair[1],self.propagate)
 
-    def findClickedIndex(self, clickedPoint):
+    def findClickedIndex(self, clickedPoint): # Given coordinates, returns index of tile
         i=int(clickedPoint.y//self.tileWidth)
         j=int(clickedPoint.x//self.tileWidth)
         if i<self.gridSize and j<self.gridSize:
             return i,j
         return False,False   
     
-    def hover(self,mousePosition):
-        i=int(mousePosition.y//self.tileWidth)
-        j=int(mousePosition.x//self.tileWidth)
+    def hover(self,mousePosition): # Given coordinates, triggers hover effect for tile in position
+        i,j=self.findClickedIndex(mousePosition)
         if i<self.gridSize and j<self.gridSize:
             if (int(i),int(j))!=self.previousTile:
                 if self.previousTile:
@@ -127,7 +132,7 @@ class Minesweeper:
                 self.previousTile=i,j
                 self.tiles[i][j].drawTile(self.window,image=self.icons,hover=True)
 
-    def displayMines(self):
+    def displayMines(self): # Once game's over, displays positions of all mines
         for tileRow in self.tiles:
             for tile in tileRow:
                 if tile.mine==True:
@@ -137,19 +142,20 @@ class Minesweeper:
     def play(self):
         self.initTileValues()
         self.drawGrid()
-        while not self.clickedTiles == self.gridSize*self.gridSize-self.numberOfMines:            
+        # Game continues until all tiles except mines have beel selected
+        while not self.clickedTiles == self.gridSize*self.gridSize-self.numberOfMines: 
             mousePosition=self.window.getMouse()
             self.hover(mousePosition)         
             clickedPoint,leftOrRight=self.window.checkMouseClick()
             if clickedPoint!=None:
                 i,j=self.findClickedIndex(clickedPoint)
-                if leftOrRight=='L':
+                if leftOrRight=='L': # If Left mouse click
                     if self.tiles[i][j].mine==True and self.tiles[i][j].flagged==False:
                         self.displayMines()                    
                         break        
                     elif self.tiles[i][j].clicked==False and self.tiles[i][j].flagged==False:
                         self.findNeighbours(i,j,self.propagate)
-                else:
+                else: # If right mouse click
                     if self.tiles[i][j].clicked==False and self.flags<self.numberOfMines or self.tiles[i][j].flagged==True:
                         self.tiles[i][j].flagged = not self.tiles[i][j].flagged                                        
                         if self.tiles[i][j].flagged==False:
@@ -157,7 +163,7 @@ class Minesweeper:
                         else:
                             self.flags+=1
                         self.tiles[i][j].drawTile(self.window,self.icons)
-        self.displayMines()
+        self.displayMines() #Game's over, display mine locations
 
 
 def main():
