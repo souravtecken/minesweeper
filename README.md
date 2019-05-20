@@ -1,5 +1,5 @@
 # Minesweeper
-## A recreation of the classic Minessweeper game in python.
+## A recreation of the classic Minesweeper game in python.
 ### To Run:
 1. Install tkinter:
 ```
