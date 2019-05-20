@@ -6,8 +6,8 @@ class Image:
 
     def __init__(self, tileWidth):                
         try:
-            self.flagImage = pil.open("images/flag.png")            
-            self.flagImage=self.resize(self.flagImage, tileWidth)            
+            self.flagImageUnResized = pil.open("images/flag.png")            
+            self.flagImage=self.resize(self.flagImageUnResized, tileWidth)            
         except:
             print("Flag icon file not found.")
             self.flagImage=None

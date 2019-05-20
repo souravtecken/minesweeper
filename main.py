@@ -39,7 +39,10 @@ class Tile:
         elif self.mine:
             textString='M'
         t=Text(Point(self.x,self.y),textString)
-        t.setSize(int(self.width*0.4))
+        try:
+            t.setSize(int(self.width*0.4)) # Largest size allowed is 36
+        except:
+            t.setSize(36)
         t.setFill(textColors[textString])
         # Image
         if gameOver==False:
@@ -68,12 +71,24 @@ class Minesweeper:
         self.icons=image.Image(self.tileWidth)
         self.tiles=[[Tile(self.tileWidth*j + self.tileWidth//2, self.tileWidth*i + self.tileWidth//2, 0, self.tileWidth)
                                                      for j in range(gridSize)] for i in range(gridSize)]   
-        self.window= GraphWin("Minesweeper",self.tileWidth*self.gridSize,self.tileWidth*gridSize,autoflush=False)        
+        self.window=GraphWin("Minesweeper",windowHeight+300,windowHeight,autoflush=False)        
+
+    def displayNumberOfFlags(self):
+        t=Text(Point(self.gridSize*self.tileWidth+150,250),f"{self.flags} / {self.numberOfMines}")
+        t.setSize(20)
+        r=Rectangle(Point(self.gridSize*self.tileWidth+10,240),Point(self.gridSize*self.tileWidth+300,260))
+        r.setFill(color_rgb(217,217,217))
+        r.setOutline(color_rgb(217,217,217))
+        r.draw(self.window)
+        t.draw(self.window)
 
     def drawGrid(self): # Draws all the tiles 
         for tileRow in self.tiles:
             for tile in tileRow:
                 tile.drawTile(self.window)
+        i=Image(Point(self.gridSize*self.tileWidth+150,150),self.icons.flagImageUnResized)
+        i.draw(self.window)
+        self.displayNumberOfFlags()
 
     def increment(self, neighbours): #Increments all tiles given by these indices by 1 
         for pair in neighbours:
@@ -165,8 +180,7 @@ class Minesweeper:
             if clickedPoint!=None:
                 i,j=self.findClickedIndex(clickedPoint)
                 if leftOrRight=='L': # If Left mouse click
-                    if self.tiles[i][j].mine==True and self.tiles[i][j].flagged==False:
-                        self.displayMines()                    
+                    if self.tiles[i][j].mine==True and self.tiles[i][j].flagged==False:                        
                         break        
                     elif self.tiles[i][j].clicked==False and self.tiles[i][j].flagged==False:
                         self.findNeighbours(i,j,self.propagate)
@@ -178,6 +192,7 @@ class Minesweeper:
                         else:
                             self.flags+=1
                         self.tiles[i][j].drawTile(self.window,self.icons)
+                    self.displayNumberOfFlags()
         self.displayMines() #Game's over, display mine locations
 
 
