@@ -4,6 +4,7 @@ import image
 
 unclickedColor="grey"
 clickedColor="white"
+hoverColor="green"
 windowHeight=900
 
 class Tile:    
@@ -18,11 +19,13 @@ class Tile:
         self.clicked=False
         self.flagged=False                    
 
-    def drawTile(self, window, image=None, gameOver=False):
+    def drawTile(self, window, image=None, gameOver=False,hover=False):
         r=Rectangle(self.topLeft,self.bottomRight)         
-        r.setFill(unclickedColor)        
+        r.setFill(unclickedColor)                
         if self.clicked:
             r.setFill(clickedColor)                    
+        elif hover==True:
+            r.setFill(hoverColor)
         t=Text(Point(self.x,self.y),self.val)        
         if self.flagged:            
             t=Text(Point(self.x,self.y),'F')                    
@@ -45,11 +48,12 @@ class Minesweeper:
         self.clickedTiles=0
         self.gridSize=gridSize
         self.tileWidth=windowHeight//gridSize
-        self.numberOfMines=10
+        self.numberOfMines=40
+        self.previousTile=None
         self.icons=image.Image(self.tileWidth)
         self.tiles=[[Tile(self.tileWidth*j + self.tileWidth//2, self.tileWidth*i + self.tileWidth//2, 0, self.tileWidth)
                                                      for j in range(gridSize)] for i in range(gridSize)]   
-        self.window= GraphWin("Minesweeper",self.tileWidth*self.gridSize,self.tileWidth*gridSize)        
+        self.window= GraphWin("Minesweeper",self.tileWidth*self.gridSize,self.tileWidth*gridSize,autoflush=False)        
 
     def drawGrid(self):
         for tileRow in self.tiles:
@@ -112,39 +116,52 @@ class Minesweeper:
         if i<self.gridSize and j<self.gridSize:
             return i,j
         return False,False   
+    
+    def hover(self,mousePosition):
+        i=int(mousePosition.y//self.tileWidth)
+        j=int(mousePosition.x//self.tileWidth)
+        if i<self.gridSize and j<self.gridSize:
+            if (int(i),int(j))!=self.previousTile:
+                if self.previousTile:
+                    self.tiles[self.previousTile[0]][self.previousTile[1]].drawTile(self.window,image=self.icons)
+                self.previousTile=i,j
+                self.tiles[i][j].drawTile(self.window,image=self.icons,hover=True)
 
     def displayMines(self):
         for tileRow in self.tiles:
             for tile in tileRow:
                 if tile.mine==True:
                     tile.drawTile(self.window,self.icons,gameOver=True)
-        self.window.getMouse()                             
+        self.window.getMouseClick()                             
 
     def play(self):
         self.initTileValues()
         self.drawGrid()
-        while not self.clickedTiles == self.gridSize*self.gridSize-self.numberOfMines:
-            clickedPoint,leftOrRight=self.window.getMouse()
-            i,j=self.findClickedIndex(clickedPoint)
-            if leftOrRight=='L':
-                if self.tiles[i][j].mine==True and self.tiles[i][j].flagged==False:
-                    self.displayMines()                    
-                    break        
-                elif self.tiles[i][j].clicked==False and self.tiles[i][j].flagged==False:
-                    self.findNeighbours(i,j,self.propagate)
-            else:
-                if self.tiles[i][j].clicked==False and self.flags<self.numberOfMines or self.tiles[i][j].flagged==True:
-                    self.tiles[i][j].flagged = not self.tiles[i][j].flagged                                        
-                    if self.tiles[i][j].flagged==False:
-                        self.flags-=1
-                    else:
-                        self.flags+=1
-                    self.tiles[i][j].drawTile(self.window,self.icons)
+        while not self.clickedTiles == self.gridSize*self.gridSize-self.numberOfMines:            
+            mousePosition=self.window.getMouse()
+            self.hover(mousePosition)         
+            clickedPoint,leftOrRight=self.window.checkMouseClick()
+            if clickedPoint!=None:
+                i,j=self.findClickedIndex(clickedPoint)
+                if leftOrRight=='L':
+                    if self.tiles[i][j].mine==True and self.tiles[i][j].flagged==False:
+                        self.displayMines()                    
+                        break        
+                    elif self.tiles[i][j].clicked==False and self.tiles[i][j].flagged==False:
+                        self.findNeighbours(i,j,self.propagate)
+                else:
+                    if self.tiles[i][j].clicked==False and self.flags<self.numberOfMines or self.tiles[i][j].flagged==True:
+                        self.tiles[i][j].flagged = not self.tiles[i][j].flagged                                        
+                        if self.tiles[i][j].flagged==False:
+                            self.flags-=1
+                        else:
+                            self.flags+=1
+                        self.tiles[i][j].drawTile(self.window,self.icons)
         self.displayMines()
 
 
 def main():
-    minesweeper=Minesweeper(8)
+    minesweeper=Minesweeper(16)
     minesweeper.play()
     minesweeper.window.close()
 
